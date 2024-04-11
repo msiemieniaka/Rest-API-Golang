@@ -3,7 +3,6 @@ package routes
 import (
 	"net/http"
 	"rest-api/app/models"
-	"rest-api/app/utils"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
@@ -35,30 +34,15 @@ func getEvent(context *gin.Context) {
 }
 
 func createEvent(context *gin.Context) {
-
-	token := context.Request.Header.Get("Authorization")
-
-	if token == "" {
-		context.JSON(http.StatusUnauthorized, gin.H{"message":"Not authorized"})
-		return
-	}
-
-	userID, err := utils.VerifyToken(token)
-
-	if err != nil {
-		context.JSON(http.StatusUnauthorized, gin.H{"message":"Not authorized"})
-		return
-	}
-
 	var event models.Event
-	err = context.ShouldBindJSON(&event)
+	err := context.ShouldBindJSON(&event)
 
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not post data"})
 		return
 	}
 
-
+	userID := context.GetInt64("userID")
 	event.UserID = userID
 
 	err = event.Save()
