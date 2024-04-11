@@ -44,7 +44,7 @@ if err != nil {
 		location TEXT NOT NULL,
 		dateTime DATETIME NOT NULL,
 		user_id INTEGER,
-		FOREIGN KEY(user_id) REFERENCES user(id)
+		FOREIGN KEY(user_id) REFERENCES users(id)
 	)
 	`
 
