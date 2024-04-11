@@ -74,7 +74,8 @@ func updateEvent(context *gin.Context) {
 		return
 	}
 	updatedEvent.ID = eventID
-	updatedEvent.Update()
+	err = updatedEvent.Update()
+
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not update event"})
 		return
