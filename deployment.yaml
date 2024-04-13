@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rest-go
+  replicas: 2
+spec:
+  selector:
+    matchLabels:
+      app: rest-go
+  template:
+    metadata:
+      labels:
+        app: rest-go
+    spec:
+      containers:
+      - name: rest-go
+        image: <Image>
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8080
