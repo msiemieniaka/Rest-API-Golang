@@ -1,23 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rest-go
-  replicas: 2
+  name: rest-go-deployment
 spec:
+  replicas: 2
   selector:
     matchLabels:
       app: rest-go
+      tier: backend
   template:
     metadata:
       labels:
         app: rest-go
+        tier: backend
     spec:
       containers:
-      - name: rest-go
-        image: <Image>
+      - name: go-app-docker
+        image: ciulik/go-app-docker
+        imagePullPolicy: Always
         resources:
           limits:
             memory: "128Mi"
             cpu: "500m"
-        ports:
-        - containerPort: 8080
+        livenessProbe: 
+          httpGet:
+              port: 8080
+          periodSeconds: 10
+          initialDelaySeconds: 5
