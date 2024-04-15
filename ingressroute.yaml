@@ -1,0 +1,33 @@
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: my-backend-api-ingressroute
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: PathPrefix(`/events`)
+      kind: Rule
+      services:
+        - name: my-backend-api
+          port: 8080
+    - match: PathPrefix(`/events/{id}`)
+      kind: Rule
+      services:
+        - name: my-backend-api
+          port: 8080
+    - match: PathPrefix(`/events/{id}/register`)
+      kind: Rule
+      services:
+        - name: my-backend-api
+          port: 8080
+    - match: PathPrefix(`/signup`)
+      kind: Rule
+      services:
+        - name: my-backend-api
+          port: 8080
+    - match: PathPrefix(`/login`)
+      kind: Rule
+      services:
+        - name: my-backend-api
+          port: 8080
