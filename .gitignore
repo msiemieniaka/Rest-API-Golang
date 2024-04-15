@@ -15,6 +15,7 @@
 !go.mod
 !Dockerfile
 !deployment.yaml
+!ingress.yaml
 !service.yaml
 !README.md
 !LICENSE
