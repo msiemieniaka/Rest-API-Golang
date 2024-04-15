@@ -17,3 +17,5 @@ spec:
       containers:
       - name: go-app-docker
         image: ciulik/go-app-docker
+        ports:
+        - containerPort: 8080
