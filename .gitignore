@@ -17,6 +17,7 @@
 !deployment.yaml
 !ingress.yaml
 !service.yaml
+!*.yaml
 !ingress*
 !README.md
 !LICENSE
