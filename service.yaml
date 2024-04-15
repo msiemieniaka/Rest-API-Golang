@@ -1,11 +1,14 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: backend
+  name: my-backend-api
+  labels:
+    app: my-backend-api
 spec:
-  selector:
-    app: rest-go
+  type: ClusterIP
   ports:
-  -  port: 8080
-     targetPort: 8080
-
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    app: my-backend-api
