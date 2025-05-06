@@ -1,6 +1,7 @@
 package main
 
 import (
+	"rest-api/app/config"
 	"rest-api/app/db"
 	"rest-api/app/routes"
 
@@ -8,6 +9,7 @@ import (
 )
 
 func main() {
+	config.LoadConfig()
 	db.InitDB()
 	server := gin.Default()
 
