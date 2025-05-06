@@ -18,9 +18,14 @@ spec:
       - name: {{ include "rest-api-go.name" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
         imagePullPolicy: {{ .Values.image.pullPolicy }}
+        env:
+        - name: DB_HOST
+          value: "{{ .Values.database.host }}"
+        - name: DB_PORT
+          value: "{{ .Values.database.port }}"
         envFrom:
         - secretRef:
-            name: {{ .Values.secret.name }}
+            name: {{ .Values.database.secretName }}
         ports:
         - containerPort: {{ .Values.service.targetPort }}
         resources:

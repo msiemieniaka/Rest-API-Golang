@@ -28,7 +28,8 @@ hpa:
 vpa:
   enabled: true
   updateMode: "Auto"
-  
-secret:
-  enabled: true
-  name: rest-api-db-secret
+
+database:
+  host: go-postgresql
+  port: 5432
+  secretName: rest-api-db-secret
