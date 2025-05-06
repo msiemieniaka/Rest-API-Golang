@@ -2,6 +2,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"rest-api/app/db"
 	"time"
 )
@@ -18,20 +19,12 @@ type Event struct {
 var events = []Event{}
 
 func (e *Event) Save() error {
-	query :=
-		`INSERT INTO events(name, description, location, dateTime, user_id)
-     VALUES (?,?,?,?,?)`
-	stmt, err := db.DB.Prepare(query)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-	result, err := stmt.Exec(e.Name, e.Description, e.Location, e.DateTime, e.UserID)
-	if err != nil {
-		return err
-	}
-	id, err := result.LastInsertId()
-	e.ID = id
+	query := `
+		INSERT INTO events(name, description, location, datetime, user_id)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id`
+
+	err := db.DB.QueryRow(query, e.Name, e.Description, e.Location, e.DateTime, e.UserID).Scan(&e.ID)
 	return err
 }
 
@@ -58,7 +51,7 @@ func GetAllEvent() ([]Event, error) {
 }
 
 func GetEventByID(id int64) (*Event, error) {
-	query := "SELECT * FROM events WHERE id = ?"
+	query := "SELECT * FROM events WHERE id = $1"
 	row := db.DB.QueryRow(query, id)
 
 	var event Event
@@ -71,42 +64,50 @@ func GetEventByID(id int64) (*Event, error) {
 
 func (event Event) Update() error {
 	query := `
-	UPDATE EVENTS
-SET name = ?, description = ?, location = ?, dateTime = ?
-WHERE id = ?
-`
-	stmt, err := db.DB.Prepare(query)
+    UPDATE events 
+    SET name = $1, description = $2, location = $3, datetime = $4
+    WHERE id = $5 AND user_id = $6
+    RETURNING id`
 
-	if err != nil {
-		return err
-	}
+	result := db.DB.QueryRow(query,
+		event.Name,
+		event.Description,
+		event.Location,
+		event.DateTime,
+		event.ID,
+		event.UserID)
 
-	defer stmt.Close()
-
-	_, err = stmt.Exec(event.Name, event.Description, event.Location, event.DateTime, event.ID)
-	return err
+	return result.Scan(&event.ID)
 }
 
 func (event Event) Delete() error {
-	query := "DELETE FROM events WHERE id = ?"
-	stmt, err := db.DB.Prepare(query)
-	if err != nil {
-		return err
+	query := `
+        DELETE FROM events 
+        WHERE id = $1 AND user_id = $2 
+        RETURNING id`
+
+	result := db.DB.QueryRow(query, event.ID, event.UserID)
+
+	var id int64
+	if err := result.Scan(&id); err != nil {
+		return errors.New("event not found or not authorized to delete")
 	}
-
-	defer stmt.Close()
-
-	_, err = stmt.Exec(event.ID)
-	return err
+	return nil
 }
 
-// Add this new method to check if user is already registered
 func (e Event) IsUserRegistered(userID int64) (bool, error) {
-	query := "SELECT COUNT(*) FROM registrations WHERE event_id = $1 AND user_id = $2"
+	// More explicit query
+	query := `
+        SELECT COUNT(*) 
+        FROM registrations 
+        WHERE event_id = $1 
+        AND user_id = $2
+        AND EXISTS (SELECT 1 FROM events WHERE id = $1)`
+
 	var count int
 	err := db.DB.QueryRow(query, e.ID, userID).Scan(&count)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("database error checking registration: %v", err)
 	}
 	return count > 0, nil
 }
@@ -155,16 +156,29 @@ func (e Event) GetRegisteredUsers() ([]int64, error) {
 }
 
 func (event Event) CancelRegistration(userID int64) error {
-	query := "DELETE FROM registrations WHERE event_id = ? AND user_id = ?"
-	stmt, err := db.DB.Prepare(query)
-
+	// First check if the event exists
+	query := "SELECT id FROM events WHERE id = $1"
+	var eventID int64
+	err := db.DB.QueryRow(query, event.ID).Scan(&eventID)
 	if err != nil {
-		return err
+		return errors.New("event not found")
 	}
 
-	defer stmt.Close()
+	// Then try to delete the registration
+	query = "DELETE FROM registrations WHERE event_id = $1 AND user_id = $2"
+	result, err := db.DB.Exec(query, event.ID, userID)
+	if err != nil {
+		return fmt.Errorf("error deleting registration: %v", err)
+	}
 
-	_, err = stmt.Exec(event.ID, userID)
-	return err
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("error checking affected rows: %v", err)
+	}
 
+	if rowsAffected == 0 {
+		return errors.New("no active registration found")
+	}
+
+	return nil
 }

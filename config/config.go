@@ -5,5 +5,5 @@ const (
 	DBPort     = 5432
 	DBUser     = "postgres"
 	DBPassword = "root"
-	DBName     = "postgres"
+	DBName     = "marcinsiemieniaka" // Changed from postgres to a dedicated database
 )

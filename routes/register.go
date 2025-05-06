@@ -45,15 +45,47 @@ func registerForEvent(context *gin.Context) {
 func cancelRegistration(context *gin.Context) {
 	userID := context.GetInt64("userID")
 	eventID, err := strconv.ParseInt(context.Param("id"), 10, 64)
-
-	var event models.Event
-	event.ID = eventID
-
-	err = event.CancelRegistration(userID)
-
 	if err != nil {
-		context.JSON(http.StatusInternalServerError, gin.H{"message": "Could not cancel the registation"})
+		context.JSON(http.StatusBadRequest, gin.H{
+			"message": "Invalid event ID",
+			"error":   err.Error(),
+		})
 		return
 	}
-	context.JSON(http.StatusCreated, gin.H{"message": "You have canceled registartion"})
+
+	event, err := models.GetEventByID(eventID)
+	if err != nil {
+		context.JSON(http.StatusNotFound, gin.H{
+			"message": "Event not found",
+			"eventId": eventID,
+		})
+		return
+	}
+
+	err = event.CancelRegistration(userID)
+	if err != nil {
+		switch err.Error() {
+		case "event not found":
+			context.JSON(http.StatusNotFound, gin.H{
+				"message": "Event not found",
+				"eventId": eventID,
+			})
+		case "no active registration found":
+			context.JSON(http.StatusNotFound, gin.H{
+				"message": "No registration found for this event",
+			})
+		default:
+			context.JSON(http.StatusInternalServerError, gin.H{
+				"message": "Failed to cancel registration",
+				"error":   err.Error(),
+			})
+		}
+		return
+	}
+
+	context.JSON(http.StatusOK, gin.H{
+		"message": "Registration cancelled successfully",
+		"eventId": eventID,
+		"userId":  userID,
+	})
 }

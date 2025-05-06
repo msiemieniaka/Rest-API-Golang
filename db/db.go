@@ -2,6 +2,9 @@ package db
 
 import (
 	"database/sql"
+	"fmt"
+	"rest-api/app/config"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -10,11 +13,30 @@ var DB *sql.DB
 
 func InitDB() {
 	var err error
-	connStr := "postgres://username:password@localhost:5432/events_db?sslmode=disable"
-	DB, err = sql.Open("postgres", connStr)
+	connStr := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		config.DBHost,
+		config.DBPort,
+		config.DBUser,
+		config.DBPassword,
+		config.DBName,
+	)
+
+	// Try to connect with retries
+	for i := 0; i < 3; i++ {
+		DB, err = sql.Open("postgres", connStr)
+		if err == nil {
+			err = DB.Ping()
+			if err == nil {
+				break
+			}
+		}
+		fmt.Printf("Failed to connect to database, retrying in 5 seconds... (attempt %d/3)\n", i+1)
+		time.Sleep(5 * time.Second)
+	}
 
 	if err != nil {
-		panic("Could not connect to DB: " + err.Error())
+		panic(fmt.Sprintf("Could not connect to DB after 3 attempts: %v", err))
 	}
 
 	DB.SetMaxOpenConns(10)
