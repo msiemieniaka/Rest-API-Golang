@@ -2,12 +2,12 @@
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
-  name: {{ include "rest-api-chart.fullname" . }}-vpa
+  name: {{ include "rest-api-go.fullname" . }}-vpa
 spec:
   targetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "rest-api-chart.fullname" . }}
+    name: {{ include "rest-api-go.fullname" . }}
   updatePolicy:
     updateMode: {{ .Values.vpa.updateMode }}
 {{- end }}

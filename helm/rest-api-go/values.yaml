@@ -3,7 +3,7 @@ replicaCount: 2
 
 image:
   repository: ciulik/rest-api-go-mgr
-  tag: latest
+  tag: "latest"
   pullPolicy: IfNotPresent
 
 service:
@@ -28,3 +28,7 @@ hpa:
 vpa:
   enabled: true
   updateMode: "Auto"
+  
+secret:
+  enabled: true
+  name: rest-api-db-secret
