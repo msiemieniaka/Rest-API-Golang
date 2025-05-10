@@ -7,51 +7,36 @@ import (
 )
 
 type User struct {
-	ID int64
-	Email string `binding:"required"`
+	ID       int64
+	Email    string `binding:"required"`
 	Password string `binding:"required"`
 }
 
 func (u User) Save() error {
-	query := "INSERT INTO users(email, password) VALUES (?,?)"
-	stmt, err := db.DB.Prepare(query)
-	
-	if err != nil {
-		return err
-	}
-	
-	defer stmt.Close()
-	
+	query := "INSERT INTO users(email, password) VALUES ($1,$2) RETURNING id"
 	hashedPassword, err := utils.HashPassword(u.Password)
-
 	if err != nil {
 		return err
 	}
 
-	result, err := stmt.Exec(u.Email, hashedPassword)
-	
+	err = db.DB.QueryRow(query, u.Email, hashedPassword).Scan(&u.ID)
 	if err != nil {
 		return err
 	}
-	userID, err := result.LastInsertId()
-	
-	u.ID = userID
-	return err
+	return nil
 }
 
-func (u *User) ValidateCredentials() error{
-	query := "SELECT id, password FROM users WHERE email = ?"
+func (u *User) ValidateCredentials() error {
+	query := "SELECT id, password FROM users WHERE email = $1"
 	row := db.DB.QueryRow(query, u.Email)
 
-	var retreivedPassword string
-	err := row.Scan(&u.ID, &retreivedPassword)
-
+	var retrievedPassword string
+	err := row.Scan(&u.ID, &retrievedPassword)
 	if err != nil {
 		return err
 	}
 
-	passwordIsValid := utils.CheckPasswordHash(u.Password, retreivedPassword)
-
+	passwordIsValid := utils.CheckPasswordHash(u.Password, retrievedPassword)
 	if !passwordIsValid {
 		return errors.New("Credentials invalid")
 	}
