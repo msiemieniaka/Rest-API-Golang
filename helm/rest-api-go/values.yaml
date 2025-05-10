@@ -7,7 +7,7 @@ image:
   pullPolicy: IfNotPresent
 
 service:
-  type: ClusterIP
+  type: LoadBalancer
   port: 80
   targetPort: 8080
 
@@ -29,7 +29,10 @@ vpa:
   enabled: true
   updateMode: "Auto"
 
-database:
-  host: go-postgresql
-  port: 5432
-  secretName: rest-api-db-secret
+postgres:
+  image: postgres:latest
+  replicaCount: 1
+  db: mydb
+  host: postgres
+  servicePort: 5432
+  secretName: db-secret
